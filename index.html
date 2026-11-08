@@ -124,6 +124,10 @@
             background-color: #10B981;
             padding: 0.5rem;
             font-size: 0.85rem;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
         .copy-btn:hover {
@@ -144,7 +148,8 @@
             <div class="form-group">
                 <label for="custom-alias">Custom Alias (Optional)</label>
                 <div class="prefix-wrapper">
-                    <span class="prefix">short.ly/</span>
+                    <!-- Updated to match the real API domain -->
+                    <span class="prefix">is.gd/</span>
                     <input type="text" id="custom-alias" placeholder="my-custom-link" pattern="[a-zA-Z0-9-_]+" title="Only letters, numbers, dashes, and underscores allowed">
                 </div>
             </div>
@@ -153,8 +158,9 @@
         </form>
 
         <div id="result-container">
-            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">Your custom short URL is ready:</p>
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">Your short URL is ready:</p>
             <a href="#" id="short-url" target="_blank"></a>
+            <br>
             <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
         </div>
     </div>
@@ -163,43 +169,53 @@
         const form = document.getElementById('shorten-form');
         const resultContainer = document.getElementById('result-container');
         const shortUrlDisplay = document.getElementById('short-url');
-        
-        // The mock domain for your short links
-        const domain = "https://short.ly/";
 
         form.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent page reload
+            e.preventDefault();
 
-            const longUrl = document.getElementById('long-url').value;
-            let customAlias = document.getElementById('custom-alias').value.trim();
+            const longUrl = encodeURIComponent(document.getElementById('long-url').value);
+            const customAlias = document.getElementById('custom-alias').value.trim();
+            
+            // Show a loading message while waiting for the API
+            shortUrlDisplay.textContent = "Generating link...";
+            shortUrlDisplay.removeAttribute('href');
+            resultContainer.style.display = 'block';
 
-            // If the user didn't provide a custom alias, generate a random 6-character string
-            if (!customAlias) {
-                customAlias = generateRandomString(6);
+            // Build the URL to talk to the free is.gd API
+            let apiUrl = `https://is.gd/create.php?format=json&url=${longUrl}&callback=handleApiResponse`;
+            
+            if (customAlias) {
+                apiUrl += `&shorturl=${encodeURIComponent(customAlias)}`;
             }
 
-            // Create the final short URL
-            const finalShortUrl = domain + customAlias;
-
-            // Display the result
-            shortUrlDisplay.textContent = finalShortUrl;
-            shortUrlDisplay.href = longUrl; // In a real app, the short URL would redirect to this
-            resultContainer.style.display = 'block';
+            // Inject a temporary script to get around browser security limits (JSONP method)
+            const script = document.createElement('script');
+            script.src = apiUrl;
+            
+            // Clean up the script tag immediately after it runs
+            script.onload = () => document.body.removeChild(script);
+            document.body.appendChild(script);
         });
 
-        // Helper function to generate a random string
-        function generateRandomString(length) {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * characters.length));
+        // This function is automatically triggered when the is.gd server replies
+        function handleApiResponse(data) {
+            if (data.shorturl) {
+                // Success: Display the real, workable link
+                shortUrlDisplay.textContent = data.shorturl;
+                shortUrlDisplay.href = data.shorturl;
+            } else if (data.errorcode) {
+                // Failure: The alias was probably taken by someone else
+                shortUrlDisplay.textContent = "Error: " + data.errormessage;
+                shortUrlDisplay.removeAttribute('href');
             }
-            return result;
         }
 
-        // Helper function to copy the URL to the user's clipboard
         function copyToClipboard() {
             const textToCopy = shortUrlDisplay.textContent;
+            
+            // Prevent copying if there was an error
+            if(textToCopy.startsWith("Error")) return; 
+            
             navigator.clipboard.writeText(textToCopy).then(() => {
                 const copyBtn = document.querySelector('.copy-btn');
                 const originalText = copyBtn.textContent;
