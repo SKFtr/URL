@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #F3F4F6;
+            color: #1F2937;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="message">
+        <h2>Redirecting to destination...</h2>
+        <p>Please wait a moment.</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqfbDqpuBqBrJ0aPGx4vs0AN8iP4bTUb8",
+            authDomain: "srt-url.firebaseapp.com",
+            projectId: "srt-url",
+            storageBucket: "srt-url.firebasestorage.app",
+            messagingSenderId: "623972154091",
+            appId: "1:623972154091:web:2b61b7efa5b7f28f049cae",
+            measurementId: "G-ERJQ7K4EQJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Read the URL path to figure out what alias the user is trying to visit
+        const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+        const alias = pathParts[pathParts.length - 1]; // Grabs the last part of the URL (e.g., 'my.place')
+
+        if (alias) {
+            const docRef = doc(db, "urls", alias);
+            getDoc(docRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    // Instantly redirect to the long URL
+                    window.location.replace(docSnap.data().longUrl);
+                } else {
+                    document.getElementById('message').innerHTML = "<h2>Link not found!</h2><p>This custom URL does not exist.</p>";
+                }
+            }).catch((error) => {
+                console.error("Error reading database:", error);
+                document.getElementById('message').innerHTML = "<h2>Error connecting to database.</h2>";
+            });
+        } else {
+            // If there is no alias, send them back to the main homepage
+            window.location.replace("/"); 
+        }
+    </script>
+</body>
+</html>
