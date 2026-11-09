@@ -133,11 +133,27 @@
         .copy-btn:hover {
             background-color: #059669;
         }
+
+        /* Screen shown when actively redirecting a user */
+        #redirect-screen {
+            display: none;
+            text-align: center;
+        }
+        #redirect-screen h2 {
+            color: var(--text-color);
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <!-- Redirect Screen -->
+    <div id="redirect-screen">
+        <h2>Redirecting to destination...</h2>
+        <p>Please wait a moment.</p>
+    </div>
+
+    <!-- Main UI Container -->
+    <div class="container" id="app-interface" style="display:none;">
         <h2>Shorten Your Link</h2>
         <form id="shorten-form">
             <div class="form-group">
@@ -148,8 +164,8 @@
             <div class="form-group">
                 <label for="custom-alias">Custom Alias (Optional)</label>
                 <div class="prefix-wrapper">
-                    <!-- Updated to match the real API domain -->
-                    <span class="prefix">is.gd/</span>
+                    <!-- Changed to hash routing prefix for GitHub Pages compatibility -->
+                    <span class="prefix">#</span>
                     <input type="text" id="custom-alias" placeholder="my-custom-link" pattern="[a-zA-Z0-9-_]+" title="Only letters, numbers, dashes, and underscores allowed">
                 </div>
             </div>
@@ -165,66 +181,105 @@
         </div>
     </div>
 
-    <script>
+    <!-- Firebase SDK (Version 10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        // Your Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqfbDqpuBqBrJ0aPGx4vs0AN8iP4bTUb8",
+            authDomain: "srt-url.firebaseapp.com",
+            projectId: "srt-url",
+            storageBucket: "srt-url.firebasestorage.app",
+            messagingSenderId: "623972154091",
+            appId: "1:623972154091:web:2b61b7efa5b7f28f049cae",
+            measurementId: "G-ERJQ7K4EQJ"
+        };
+
+        // Initialize Firebase & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 1. ROUTING LOGIC: Check if the URL contains a hash alias to redirect
+        const currentHash = window.location.hash.substring(1); 
+
+        if (currentHash) {
+            document.getElementById('redirect-screen').style.display = 'block';
+
+            const docRef = doc(db, "urls", currentHash);
+            getDoc(docRef).then((docSnap) => {
+                if (docSnap.exists()) {
+                    window.location.href = docSnap.data().longUrl;
+                } else {
+                    document.getElementById('redirect-screen').innerHTML = "<h2>Link not found!</h2><p>This custom alias does not exist.</p>";
+                }
+            }).catch((error) => {
+                console.error("Error reading database:", error);
+                document.getElementById('redirect-screen').innerHTML = "<h2>Error connecting to database.</h2>";
+            });
+        } else {
+            // No hash in URL, show the link creator interface
+            document.getElementById('app-interface').style.display = 'block';
+        }
+
+        // 2. CREATION LOGIC: Handle saving new links
         const form = document.getElementById('shorten-form');
         const resultContainer = document.getElementById('result-container');
         const shortUrlDisplay = document.getElementById('short-url');
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const longUrl = encodeURIComponent(document.getElementById('long-url').value);
-            const customAlias = document.getElementById('custom-alias').value.trim();
+            const longUrl = document.getElementById('long-url').value;
+            let customAlias = document.getElementById('custom-alias').value.trim();
             
-            // Show a loading message while waiting for the API
-            shortUrlDisplay.textContent = "Generating link...";
+            if (!customAlias) {
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                customAlias = '';
+                for (let i = 0; i < 6; i++) customAlias += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            shortUrlDisplay.textContent = "Saving to database...";
             shortUrlDisplay.removeAttribute('href');
             resultContainer.style.display = 'block';
 
-            // Build the URL to talk to the free is.gd API
-            let apiUrl = `https://is.gd/create.php?format=json&url=${longUrl}&callback=handleApiResponse`;
-            
-            if (customAlias) {
-                apiUrl += `&shorturl=${encodeURIComponent(customAlias)}`;
-            }
+            try {
+                const docRef = doc(db, "urls", customAlias);
+                
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    shortUrlDisplay.textContent = "Error: That alias is already taken!";
+                    return;
+                }
 
-            // Inject a temporary script to get around browser security limits (JSONP method)
-            const script = document.createElement('script');
-            script.src = apiUrl;
-            
-            // Clean up the script tag immediately after it runs
-            script.onload = () => document.body.removeChild(script);
-            document.body.appendChild(script);
+                await setDoc(docRef, {
+                    longUrl: longUrl,
+                    createdAt: new Date()
+                });
+
+                // Generate the final short link using the current GitHub Pages URL
+                const shortLink = window.location.origin + window.location.pathname + "#" + customAlias;
+                
+                shortUrlDisplay.textContent = shortLink;
+                shortUrlDisplay.href = shortLink;
+
+            } catch (error) {
+                console.error("Error writing to database:", error);
+                shortUrlDisplay.textContent = "Error saving link. (Check your Firebase Security Rules)";
+            }
         });
 
-        // This function is automatically triggered when the is.gd server replies
-        function handleApiResponse(data) {
-            if (data.shorturl) {
-                // Success: Display the real, workable link
-                shortUrlDisplay.textContent = data.shorturl;
-                shortUrlDisplay.href = data.shorturl;
-            } else if (data.errorcode) {
-                // Failure: The alias was probably taken by someone else
-                shortUrlDisplay.textContent = "Error: " + data.errormessage;
-                shortUrlDisplay.removeAttribute('href');
-            }
-        }
-
-        function copyToClipboard() {
+        // 3. COPY TO CLIPBOARD
+        window.copyToClipboard = function() {
             const textToCopy = shortUrlDisplay.textContent;
-            
-            // Prevent copying if there was an error
-            if(textToCopy.startsWith("Error")) return; 
+            if(textToCopy.startsWith("Error") || textToCopy.startsWith("Saving")) return; 
             
             navigator.clipboard.writeText(textToCopy).then(() => {
                 const copyBtn = document.querySelector('.copy-btn');
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = "Copied!";
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
             });
         }
     </script>
