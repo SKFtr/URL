@@ -5,155 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom URL Shortener</title>
     <style>
-        :root {
-            --primary-color: #4F46E5;
-            --bg-color: #F3F4F6;
-            --card-bg: #FFFFFF;
-            --text-color: #1F2937;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            background-color: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 450px;
-        }
-
-        h2 {
-            margin-top: 0;
-            text-align: center;
-            color: var(--primary-color);
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        input[type="url"],
-        input[type="text"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #D1D5DB;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-        }
-
-        .prefix-wrapper {
-            display: flex;
-            align-items: center;
-        }
-
-        .prefix {
-            background-color: #E5E7EB;
-            padding: 0.75rem;
-            border: 1px solid #D1D5DB;
-            border-right: none;
-            border-radius: 6px 0 0 6px;
-            color: #6B7280;
-            font-size: 0.9rem;
-        }
-
-        .prefix-wrapper input {
-            border-radius: 0 6px 6px 0;
-        }
-
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #4338CA;
-        }
-
-        #result-container {
-            display: none;
-            margin-top: 1.5rem;
-            padding: 1rem;
-            background-color: #ECFDF5;
-            border: 1px solid #10B981;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        #short-url {
-            color: #047857;
-            font-weight: bold;
-            font-size: 1.1rem;
-            text-decoration: none;
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            margin-top: 0.75rem;
-            background-color: #10B981;
-            padding: 0.5rem;
-            font-size: 0.85rem;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .copy-btn:hover {
-            background-color: #059669;
-        }
-
-        /* Screen shown when actively redirecting a user */
-        #redirect-screen {
-            display: none;
-            text-align: center;
-        }
-        #redirect-screen h2 {
-            color: var(--text-color);
-        }
+        :root { --primary-color: #4F46E5; --bg-color: #F3F4F6; --card-bg: #FFFFFF; --text-color: #1F2937; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: var(--card-bg); padding: 2.5rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); width: 100%; max-width: 450px; }
+        h2 { margin-top: 0; text-align: center; color: var(--primary-color); }
+        .form-group { margin-bottom: 1.25rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input[type="url"], input[type="text"] { width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
+        .prefix-wrapper { display: flex; align-items: center; }
+        .prefix { background-color: #E5E7EB; padding: 0.75rem; border: 1px solid #D1D5DB; border-right: none; border-radius: 6px 0 0 6px; color: #6B7280; font-size: 0.9rem; }
+        .prefix-wrapper input { border-radius: 0 6px 6px 0; }
+        button { width: 100%; padding: 0.75rem; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #4338CA; }
+        #result-container { display: none; margin-top: 1.5rem; padding: 1rem; background-color: #ECFDF5; border: 1px solid #10B981; border-radius: 6px; text-align: center; }
+        #short-url { color: #047857; font-weight: bold; font-size: 1.1rem; text-decoration: none; word-break: break-all; }
+        .copy-btn { margin-top: 0.75rem; background-color: #10B981; padding: 0.5rem; font-size: 0.85rem; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .copy-btn:hover { background-color: #059669; }
     </style>
 </head>
 <body>
 
-    <!-- Redirect Screen -->
-    <div id="redirect-screen">
-        <h2>Redirecting to destination...</h2>
-        <p>Please wait a moment.</p>
-    </div>
-
-    <!-- Main UI Container -->
-    <div class="container" id="app-interface" style="display:none;">
+    <div class="container" id="app-interface">
         <h2>Shorten Your Link</h2>
         <form id="shorten-form">
             <div class="form-group">
@@ -164,9 +37,9 @@
             <div class="form-group">
                 <label for="custom-alias">Custom Alias (Optional)</label>
                 <div class="prefix-wrapper">
-                    <!-- Changed to hash routing prefix for GitHub Pages compatibility -->
-                    <span class="prefix">#</span>
-                    <input type="text" id="custom-alias" placeholder="my-custom-link" pattern="[a-zA-Z0-9-_]+" title="Only letters, numbers, dashes, and underscores allowed">
+                    <!-- Changed the hashtag to a slash visually -->
+                    <span class="prefix">/</span>
+                    <input type="text" id="custom-alias" placeholder="my-custom-link" pattern="[a-zA-Z0-9-_\.]+" title="Letters, numbers, dashes, underscores, and periods allowed">
                 </div>
             </div>
 
@@ -181,12 +54,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (Version 10) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-        // Your Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCqfbDqpuBqBrJ0aPGx4vs0AN8iP4bTUb8",
             authDomain: "srt-url.firebaseapp.com",
@@ -197,33 +68,9 @@
             measurementId: "G-ERJQ7K4EQJ"
         };
 
-        // Initialize Firebase & Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 1. ROUTING LOGIC: Check if the URL contains a hash alias to redirect
-        const currentHash = window.location.hash.substring(1); 
-
-        if (currentHash) {
-            document.getElementById('redirect-screen').style.display = 'block';
-
-            const docRef = doc(db, "urls", currentHash);
-            getDoc(docRef).then((docSnap) => {
-                if (docSnap.exists()) {
-                    window.location.href = docSnap.data().longUrl;
-                } else {
-                    document.getElementById('redirect-screen').innerHTML = "<h2>Link not found!</h2><p>This custom alias does not exist.</p>";
-                }
-            }).catch((error) => {
-                console.error("Error reading database:", error);
-                document.getElementById('redirect-screen').innerHTML = "<h2>Error connecting to database.</h2>";
-            });
-        } else {
-            // No hash in URL, show the link creator interface
-            document.getElementById('app-interface').style.display = 'block';
-        }
-
-        // 2. CREATION LOGIC: Handle saving new links
         const form = document.getElementById('shorten-form');
         const resultContainer = document.getElementById('result-container');
         const shortUrlDisplay = document.getElementById('short-url');
@@ -246,7 +93,6 @@
 
             try {
                 const docRef = doc(db, "urls", customAlias);
-                
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     shortUrlDisplay.textContent = "Error: That alias is already taken!";
@@ -258,8 +104,10 @@
                     createdAt: new Date()
                 });
 
-                // Generate the final short link using the current GitHub Pages URL
-                const shortLink = window.location.origin + window.location.pathname + "#" + customAlias;
+                // Generate the final short link using a clean slash instead of a hash
+                let basePath = window.location.origin + window.location.pathname;
+                if (!basePath.endsWith('/')) basePath += '/';
+                const shortLink = basePath + customAlias;
                 
                 shortUrlDisplay.textContent = shortLink;
                 shortUrlDisplay.href = shortLink;
@@ -270,7 +118,6 @@
             }
         });
 
-        // 3. COPY TO CLIPBOARD
         window.copyToClipboard = function() {
             const textToCopy = shortUrlDisplay.textContent;
             if(textToCopy.startsWith("Error") || textToCopy.startsWith("Saving")) return; 
